@@ -1,0 +1,52 @@
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
+
+import rospy
+from std_msgs.msg import String
+from sensor_msgs.msg import PointCloud2
+from grnet_detect.srv import PC2ToPC2
+from sensor_msgs.msg import PointField
+
+import numpy as np
+
+'''
+Input:
+    nparray : np.array((n, 3))
+Return:
+    pointcloud_msg : PointCloud2()
+'''
+def nparray_to_pointcloud2(nparray):
+    pointcloud_msg = PointCloud2()
+    pointcloud_msg.header.frame_id = "map"
+
+    pointcloud_msg.width = nparray.shape[0]
+    pointcloud_msg.height = 1
+
+    pointcloud_msg.fields = [
+        PointField("x", 0, PointField.FLOAT32, 1),
+        PointField("y", 4, PointField.FLOAT32, 1),
+        PointField("z", 8, PointField.FLOAT32, 1)
+        ]
+
+    pointcloud_msg.is_bigendian = False
+    pointcloud_msg.point_step = 12
+    pointcloud_msg.row_step = pointcloud_msg.point_step * nparray.shape[0]
+    pointcloud_msg.is_dense = False
+    pointcloud_msg.data = nparray.tobytes()
+
+    return pointcloud_msg
+
+
+def grnet_detect_client():
+    rospy.wait_for_service("GRNet_Detect")
+
+    nparray = np.asarray([[0, 1, 2], [3, 4, 5], [6, 7, 8]], dtype=np.float32)
+    pointcloud_req = nparray_to_pointcloud2(nparray)
+    grnet_detect_proxy = rospy.ServiceProxy("GRNet_Detect", PC2ToPC2)
+    res = grnet_detect_proxy(pointcloud_req)
+    print(res)
+
+
+if __name__ == '__main__':
+    grnet_detect_client()
+

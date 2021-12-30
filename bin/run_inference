@@ -1,0 +1,149 @@
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
+
+import os
+from GRNetDetector.utils.io import IO
+
+from GRNetDetector.GRNet_Detector import GRNet_Detector
+
+import rospy
+from std_msgs.msg import String
+
+from sensor_msgs import point_cloud2
+from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointField
+from grnet_detect.srv import PC2ToPC2
+
+import numpy as np
+
+
+class GRNet_Service:
+    def __init__(self):
+        self.grnet_detector = GRNet_Detector()
+        return
+
+    def load_model(self, model_path):
+        self.grnet_detector.load_model(model_path)
+        return
+
+    """
+    Input:
+        pointcloud_msg : PointCloud2()
+    Return:
+        nparray : np.array((n, 3), dtype=np.float32)
+    """
+
+    def pointcloud2_to_nparray(self, pointcloud):
+        pointcloud_width = pointcloud.width
+        pointcloud_height = pointcloud.height
+        pointcloud_fields = pointcloud.fields
+
+        pointcloud_data = point_cloud2.read_points(
+            pointcloud, field_names=("x", "y", "z"), skip_nans=True
+        )
+
+        nparray = np.asarray(list(pointcloud_data), dtype=np.float32)
+
+        return nparray
+
+    """
+    Input:
+        nparray : np.array((n, 3), dtype=np.float32)
+    Return:
+        pointcloud_msg : PointCloud2()
+    """
+
+    def nparray_to_pointcloud2(self, nparray):
+        pointcloud_msg = PointCloud2()
+        pointcloud_msg.header.frame_id = "map"
+
+        pointcloud_msg.width = nparray.shape[0]
+        pointcloud_msg.height = 1
+
+        pointcloud_msg.fields = [
+            PointField("x", 0, PointField.FLOAT32, 1),
+            PointField("y", 4, PointField.FLOAT32, 1),
+            PointField("z", 8, PointField.FLOAT32, 1),
+        ]
+
+        pointcloud_msg.is_bigendian = False
+        pointcloud_msg.point_step = 12
+        pointcloud_msg.row_step = pointcloud_msg.point_step * nparray.shape[0]
+        pointcloud_msg.is_dense = False
+        pointcloud_msg.data = nparray.astype(np.float32).tobytes()
+
+        pointcloud_msg.header.stamp = rospy.Time().now()
+
+        return pointcloud_msg
+
+    def handle_grnet_detect(self, req):
+        nparray = self.pointcloud2_to_nparray(req.partial_cloud)
+
+        #  [x_min, y_min, z_min] = nparray[0]
+        #  [x_max, y_max, z_max] = nparray[0]
+        #  for point in nparray:
+        #  x_min = min(x_min, point[0])
+        #  y_min = min(y_min, point[1])
+        #  z_min = min(z_min, point[2])
+
+        #  x_max = max(x_max, point[0])
+        #  y_max = max(y_max, point[1])
+        #  z_max = max(z_max, point[2])
+        #  print("====IN====")
+        #  print("partial_cloud bbox : [" + str(x_min) + "," + str(x_max) + "][" + \
+        #  str(y_min) + "," + str(y_max) + "][" + str(z_min) + "," + str(z_max) + "]")
+
+        complete_cloud = self.grnet_detector.detect(nparray)
+
+        #  [x_min, y_min, z_min] = complete_cloud[0]
+        #  [x_max, y_max, z_max] = complete_cloud[0]
+        #  for point in complete_cloud:
+        #  x_min = min(x_min, point[0])
+        #  y_min = min(y_min, point[1])
+        #  z_min = min(z_min, point[2])
+
+        #  x_max = max(x_max, point[0])
+        #  y_max = max(y_max, point[1])
+        #  z_max = max(z_max, point[2])
+        #  print("full_cloud bbox : [" + str(x_min) + "," + str(x_max) + "][" + \
+        #  str(y_min) + "," + str(y_max) + "][" + str(z_min) + "," + str(z_max) + "]")
+        #  print("====OUT====")
+
+        pointcloud_res = self.nparray_to_pointcloud2(complete_cloud)
+
+        return pointcloud_res
+
+    def grnet_detect_server(self):
+        rospy.init_node("GRNet_Service")
+        service = rospy.Service(
+            "grnet_detect/detect", PC2ToPC2, self.handle_grnet_detect
+        )
+        print("GRNet Service Ready!")
+        rospy.spin()
+        return
+
+    def test_grnet(self):
+        pcd_file_path = "/home/chli/GRNet/shapenet-20210607T072352Z-001/shapenet/test/partial/02691156/e431f79ac9f0266bca677733d59db4df.pcd"
+
+        pointcloud_result = self.grnet_detector.detect_pcd_file(pcd_file_path)
+
+        output_folder = "/home/chli/github/gr-net/output/benchmark/02691156"
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        output_file_path = output_folder + "/test_out.h5"
+        IO.put(output_file_path, pointcloud_result)
+
+        print("Test Output File = %s" % (output_file_path))
+        return
+
+
+if __name__ == "__main__":
+    model_path = "/home/chli/GRNet/GRNet-ShapeNet.pth"
+
+    grnet_service = GRNet_Service()
+
+    grnet_service.load_model(model_path)
+
+    grnet_service.grnet_detect_server()
+
