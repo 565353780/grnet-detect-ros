@@ -16,7 +16,7 @@ from GRNetDetector.core.train import train_net
 
 
 if __name__ == '__main__':
-    cfg.CONST.WEIGHTS = "/home/chli/github/GRNet/GRNet-KITTI.pth"
+    cfg.CONST.WEIGHTS = os.environ['HOME'] + "/.ros/GRNet-KITTI.pth"
     if not os.path.exists(cfg.CONST.WEIGHTS):
         print("Weights file doesn't exists!")
         exit()

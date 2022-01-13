@@ -2,20 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import os
-from GRNetDetector.utils.io import IO
-
-from GRNetDetector.GRNet_Detector import GRNet_Detector
-
 import rospy
-from std_msgs.msg import String
+import numpy as np
 
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs.msg import PointField
+
+from GRNetDetector.utils.io import IO
+from GRNetDetector.GRNet_Detector import GRNet_Detector
+
 from grnet_detect.srv import PC2ToPC2
-
-import numpy as np
-
 
 class GRNet_Service:
     def __init__(self):
@@ -34,10 +31,6 @@ class GRNet_Service:
     """
 
     def pointcloud2_to_nparray(self, pointcloud):
-        pointcloud_width = pointcloud.width
-        pointcloud_height = pointcloud.height
-        pointcloud_fields = pointcloud.fields
-
         pointcloud_data = point_cloud2.read_points(
             pointcloud, field_names=("x", "y", "z"), skip_nans=True
         )
@@ -139,7 +132,7 @@ class GRNet_Service:
 
 
 if __name__ == "__main__":
-    model_path = "/home/chli/GRNet/GRNet-ShapeNet.pth"
+    model_path = os.environ['HOME'] + "/.ros/GRNet-ShapeNet.pth"
 
     grnet_service = GRNet_Service()
 
