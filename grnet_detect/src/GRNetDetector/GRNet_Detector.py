@@ -25,8 +25,8 @@ class GRNet_Detector:
 
         self.n_points = 2048
 
-        print('Use config:')
-        pprint(cfg)
+        #  print('Use config:')
+        #  pprint(cfg)
 
         self.grnet = GRNet(cfg)
 
