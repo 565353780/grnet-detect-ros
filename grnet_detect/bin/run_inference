@@ -29,7 +29,6 @@ class GRNet_Service:
     Return:
         nparray : np.array((n, 3), dtype=np.float32)
     """
-
     def pointcloud2_to_nparray(self, pointcloud):
         pointcloud_data = point_cloud2.read_points(
             pointcloud, field_names=("x", "y", "z"), skip_nans=True
@@ -45,7 +44,6 @@ class GRNet_Service:
     Return:
         pointcloud_msg : PointCloud2()
     """
-
     def nparray_to_pointcloud2(self, nparray):
         pointcloud_msg = PointCloud2()
         pointcloud_msg.header.frame_id = "map"
@@ -75,13 +73,12 @@ class GRNet_Service:
         #  [x_min, y_min, z_min] = nparray[0]
         #  [x_max, y_max, z_max] = nparray[0]
         #  for point in nparray:
-        #  x_min = min(x_min, point[0])
-        #  y_min = min(y_min, point[1])
-        #  z_min = min(z_min, point[2])
-
-        #  x_max = max(x_max, point[0])
-        #  y_max = max(y_max, point[1])
-        #  z_max = max(z_max, point[2])
+            #  x_min = min(x_min, point[0])
+            #  y_min = min(y_min, point[1])
+            #  z_min = min(z_min, point[2])
+            #  x_max = max(x_max, point[0])
+            #  y_max = max(y_max, point[1])
+            #  z_max = max(z_max, point[2])
         #  print("====IN====")
         #  print("partial_cloud bbox : [" + str(x_min) + "," + str(x_max) + "][" + \
         #  str(y_min) + "," + str(y_max) + "][" + str(z_min) + "," + str(z_max) + "]")
@@ -91,19 +88,17 @@ class GRNet_Service:
         #  [x_min, y_min, z_min] = complete_cloud[0]
         #  [x_max, y_max, z_max] = complete_cloud[0]
         #  for point in complete_cloud:
-        #  x_min = min(x_min, point[0])
-        #  y_min = min(y_min, point[1])
-        #  z_min = min(z_min, point[2])
-
-        #  x_max = max(x_max, point[0])
-        #  y_max = max(y_max, point[1])
-        #  z_max = max(z_max, point[2])
+            #  x_min = min(x_min, point[0])
+            #  y_min = min(y_min, point[1])
+            #  z_min = min(z_min, point[2])
+            #  x_max = max(x_max, point[0])
+            #  y_max = max(y_max, point[1])
+            #  z_max = max(z_max, point[2])
         #  print("full_cloud bbox : [" + str(x_min) + "," + str(x_max) + "][" + \
         #  str(y_min) + "," + str(y_max) + "][" + str(z_min) + "," + str(z_max) + "]")
         #  print("====OUT====")
 
         pointcloud_res = self.nparray_to_pointcloud2(complete_cloud)
-
         return pointcloud_res
 
     def grnet_detect_server(self):
