@@ -54,7 +54,7 @@ COLOR_MAP = red_blue_color_map
 def demo():
     model_path = os.environ['HOME'] + "/.ros/GRNet-ShapeNet.pth"
     pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7.ply"
-    o3d_pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan9.ply"
+    o3d_pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan12.ply"
     gt_pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/target_gt_mesh_with_color.ply"
     output_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7_grnet.ply"
 
@@ -69,8 +69,9 @@ def demo():
     complete_pointcloud.points = \
         o3d.utility.Vector3dVector(np.asarray(complete_mesh.vertices))
 
+    partial_mesh = o3d.io.read_triangle_mesh(o3d_pcd_file_path)
     partial_pointcloud = o3d.io.read_point_cloud(o3d_pcd_file_path)
-    sigma = 0
+    sigma = 0.001
     if sigma > 0:
         partial_points = np.array(partial_pointcloud.points)
         noise_x = np.random.normal(0, sigma, partial_points.shape[0])
@@ -82,13 +83,11 @@ def demo():
         noise = np.array(noise)
         partial_points += noise
         partial_pointcloud.points = o3d.utility.Vector3dVector(partial_points)
-    partial_colors = np.array(
-        [np.array([74, 24, 220])/255.0 for _ in
-         range(np.array(partial_pointcloud.points).shape[0])])
-    partial_pointcloud.colors = o3d.utility.Vector3dVector(partial_colors)
-    partial_pointcloud.estimate_normals(
-        search_param=o3d.geometry.KDTreeSearchParamHybrid(
-            radius=0.1, max_nn=30))
+        partial_mesh.vertices = o3d.utility.Vector3dVector(partial_points)
+
+    partial_colors = [[74, 24, 220] for _ in np.array(partial_mesh.vertices)]
+    partial_mesh.vertex_colors = o3d.utility.Vector3dVector(
+        np.array(partial_colors, dtype=np.float)/255.0)
 
     dist_to_partial = complete_pointcloud.compute_point_cloud_distance(
         partial_pointcloud)
@@ -114,15 +113,13 @@ def demo():
     colors = np.array(colors, dtype=np.float) / 255.0
     complete_pointcloud.colors = o3d.utility.Vector3dVector(colors)
     complete_mesh.vertex_colors = o3d.utility.Vector3dVector(colors)
+
+    #  partial_mesh.compute_vertex_normals()
     #  complete_mesh.compute_vertex_normals()
 
-    #  complete_pointcloud.estimate_normals(
-        #  search_param=o3d.geometry.KDTreeSearchParamHybrid(
-            #  radius=0.1, max_nn=30))
-
     o3d.visualization.draw_geometries([
-        #  partial_pointcloud,
-        complete_mesh
+        partial_mesh,
+        #  complete_mesh
     ])
     #  o3d.io.write_point_cloud(output_file_path, complete_pointcloud)
     return True
