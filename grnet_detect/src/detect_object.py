@@ -7,7 +7,7 @@ import open3d as o3d
 
 from GRNetDetector.GRNet_Detector import GRNet_Detector
 
-COLOR_MAP = np.array([
+red_white_color_map = np.array([
     [228, 177, 171],
     [227, 150, 149],
     [223, 115, 115],
@@ -20,6 +20,22 @@ COLOR_MAP = np.array([
     [204, 68, 75],
     [204, 68, 75],
 ])
+
+red_blue_color_map = np.array([
+    [179, 222, 226],
+    [234, 242, 215],
+    [239, 207, 227],
+    [234, 154, 178],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+])
+
+COLOR_MAP = red_white_color_map
 
 def demo():
     model_path = os.environ['HOME'] + "/.ros/GRNet-ShapeNet.pth"
@@ -34,6 +50,14 @@ def demo():
     complete_pointcloud.points = o3d.utility.Vector3dVector(pointcloud_result)
 
     partial_pointcloud = o3d.io.read_point_cloud(o3d_pcd_file_path)
+    partial_colors = np.array(
+        [np.array([197, 165, 59])/255.0 for _ in
+         range(np.array(partial_pointcloud.points).shape[0])])
+    partial_pointcloud.colors = o3d.utility.Vector3dVector(partial_colors)
+    partial_pointcloud.estimate_normals(
+        search_param=o3d.geometry.KDTreeSearchParamHybrid(
+            radius=0.1, max_nn=30))
+
     dist_to_partial = complete_pointcloud.compute_point_cloud_distance(
         partial_pointcloud)
 
