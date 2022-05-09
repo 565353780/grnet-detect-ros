@@ -19,7 +19,9 @@ red_white_color_map = np.array([
     [204, 68, 75],
     [204, 68, 75],
     [204, 68, 75],
-])
+    [204, 68, 75],
+    [204, 68, 75],
+], dtype=np.float)
 
 red_blue_color_map = np.array([
     [179, 222, 226],
@@ -33,25 +35,55 @@ red_blue_color_map = np.array([
     [226, 115, 150],
     [226, 115, 150],
     [226, 115, 150],
-])
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+    [226, 115, 150],
+], dtype=np.float)
 
-COLOR_MAP = red_white_color_map
+COLOR_MAP = red_blue_color_map
 
 def demo():
     model_path = os.environ['HOME'] + "/.ros/GRNet-ShapeNet.pth"
-    pcd_file_path = "/home/chli/chLi/incomplete_chair.ply"
-    o3d_pcd_file_path = "/home/chli/chLi/incomplete_chair_1000000.ply"
-    output_file_path = "/home/chli/chLi/complete_chair.ply"
+    pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7.ply"
+    o3d_pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan9.ply"
+    gt_pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/target_gt_mesh_with_color.ply"
+    output_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7_grnet.ply"
 
     grnet_detector = GRNet_Detector()
     grnet_detector.load_model(model_path)
     pointcloud_result = grnet_detector.detect_pcd_file(pcd_file_path)
+
+    #  complete_pointcloud = o3d.geometry.PointCloud()
+    #  complete_pointcloud.points = o3d.utility.Vector3dVector(pointcloud_result)
+    complete_mesh = o3d.io.read_triangle_mesh(gt_pcd_file_path)
     complete_pointcloud = o3d.geometry.PointCloud()
-    complete_pointcloud.points = o3d.utility.Vector3dVector(pointcloud_result)
+    complete_pointcloud.points = \
+        o3d.utility.Vector3dVector(np.asarray(complete_mesh.vertices))
 
     partial_pointcloud = o3d.io.read_point_cloud(o3d_pcd_file_path)
+    sigma = 0
+    if sigma > 0:
+        partial_points = np.array(partial_pointcloud.points)
+        noise_x = np.random.normal(0, sigma, partial_points.shape[0])
+        noise_y = np.random.normal(0, sigma, partial_points.shape[0])
+        noise_z = np.random.normal(0, sigma, partial_points.shape[0])
+        noise = []
+        for i in range(partial_points.shape[0]):
+            noise.append([noise_x[i], noise_y[i], noise_z[i]])
+        noise = np.array(noise)
+        partial_points += noise
+        partial_pointcloud.points = o3d.utility.Vector3dVector(partial_points)
     partial_colors = np.array(
-        [np.array([197, 165, 59])/255.0 for _ in
+        [np.array([74, 24, 220])/255.0 for _ in
          range(np.array(partial_pointcloud.points).shape[0])])
     partial_pointcloud.colors = o3d.utility.Vector3dVector(partial_colors)
     partial_pointcloud.estimate_normals(
@@ -63,39 +95,35 @@ def demo():
 
     colors = []
     color_num = len(COLOR_MAP)
-    min_dist = np.min(dist_to_partial)
+    min_dist = 0
     max_dist = np.max(dist_to_partial)
     dist_step = (max_dist - min_dist) / color_num
-    color_dist_range_list = \
-        [min_dist + i * dist_step for i in range(color_num)]
 
     for dist in dist_to_partial:
-        color_idx = 0
-        for i in range(1, len(color_dist_range_list)):
-            color_dist = color_dist_range_list[i]
-            if dist <= color_dist:
-                break
-            color_idx += 1
-        last_color_weight = \
-            (color_dist_range_list[color_idx] - \
-             color_dist_range_list[color_idx - 1]) / \
-            dist_step
-        current_color = COLOR_MAP[color_idx]
-        last_color = COLOR_MAP[color_idx - 1]
-        mix_color = \
-            current_color + last_color_weight * (last_color - current_color)
-        colors.append(mix_color)
+        dist_divide = dist / dist_step
+        color_idx = int(dist_divide)
+        if color_idx >= color_num:
+            color_idx -= 1
+        next_color_weight = dist_divide - color_idx
+
+        color = (1.0 - next_color_weight) * COLOR_MAP[color_idx]
+        if color_idx < color_num - 1:
+            color += next_color_weight * COLOR_MAP[color_idx + 1]
+        colors.append(color)
 
     colors = np.array(colors, dtype=np.float) / 255.0
     complete_pointcloud.colors = o3d.utility.Vector3dVector(colors)
+    complete_mesh.vertex_colors = o3d.utility.Vector3dVector(colors)
+    #  complete_mesh.compute_vertex_normals()
 
     #  complete_pointcloud.estimate_normals(
         #  search_param=o3d.geometry.KDTreeSearchParamHybrid(
             #  radius=0.1, max_nn=30))
 
     o3d.visualization.draw_geometries([
-        partial_pointcloud,
-        complete_pointcloud])
+        #  partial_pointcloud,
+        complete_mesh
+    ])
     #  o3d.io.write_point_cloud(output_file_path, complete_pointcloud)
     return True
 
