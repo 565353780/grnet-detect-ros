@@ -8,12 +8,11 @@ import open3d as o3d
 from GRNetDetector.GRNet_Detector import GRNet_Detector
 
 red_white_color_map = np.array([
+    [180, 180, 180],
     [228, 177, 171],
     [227, 150, 149],
     [223, 115, 115],
     [218, 85, 82],
-    [204, 68, 75],
-    [204, 68, 75],
     [204, 68, 75],
     [204, 68, 75],
     [204, 68, 75],
@@ -28,34 +27,20 @@ red_blue_color_map = np.array([
     [234, 242, 215],
     [239, 207, 227],
     [234, 154, 178],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
-    [226, 115, 150],
+    [226, 115, 150], [226, 115, 150],
+    [226, 115, 150], [226, 115, 150],
+    [226, 115, 150], [226, 115, 150],
+    [226, 115, 150], [226, 115, 150],
+    [226, 115, 150], [226, 115, 150],
 ], dtype=np.float)
 
-COLOR_MAP = red_blue_color_map
+COLOR_MAP = red_white_color_map
 
 def demo():
     model_path = os.environ['HOME'] + "/.ros/GRNet-ShapeNet.pth"
     pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7.ply"
-    o3d_pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan12.ply"
-    gt_pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/target_gt_mesh_with_color.ply"
+    o3d_pcd_file_path = "/home/chli/chLi/coscan_data/sofa-incomp.ply"
+    gt_pcd_file_path = "/home/chli/chLi/coscan_data/sofa-complete.ply"
     output_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7_grnet.ply"
 
     grnet_detector = GRNet_Detector()
@@ -65,13 +50,11 @@ def demo():
     #  complete_pointcloud = o3d.geometry.PointCloud()
     #  complete_pointcloud.points = o3d.utility.Vector3dVector(pointcloud_result)
     complete_mesh = o3d.io.read_triangle_mesh(gt_pcd_file_path)
-    complete_pointcloud = o3d.geometry.PointCloud()
-    complete_pointcloud.points = \
-        o3d.utility.Vector3dVector(np.asarray(complete_mesh.vertices))
+    complete_pointcloud = o3d.io.read_point_cloud(gt_pcd_file_path)
 
     partial_mesh = o3d.io.read_triangle_mesh(o3d_pcd_file_path)
     partial_pointcloud = o3d.io.read_point_cloud(o3d_pcd_file_path)
-    sigma = 0.001
+    sigma = 0
     if sigma > 0:
         partial_points = np.array(partial_pointcloud.points)
         noise_x = np.random.normal(0, sigma, partial_points.shape[0])
@@ -85,9 +68,10 @@ def demo():
         partial_pointcloud.points = o3d.utility.Vector3dVector(partial_points)
         partial_mesh.vertices = o3d.utility.Vector3dVector(partial_points)
 
-    partial_colors = [[74, 24, 220] for _ in np.array(partial_mesh.vertices)]
-    partial_mesh.vertex_colors = o3d.utility.Vector3dVector(
-        np.array(partial_colors, dtype=np.float)/255.0)
+    partial_colors = np.array([[101, 91, 82] for _ in np.array(partial_mesh.vertices)],
+                              dtype=np.float)/255.0
+    partial_pointcloud.colors = o3d.utility.Vector3dVector(partial_colors)
+    partial_mesh.vertex_colors = o3d.utility.Vector3dVector(partial_colors)
 
     dist_to_partial = complete_pointcloud.compute_point_cloud_distance(
         partial_pointcloud)
@@ -114,14 +98,43 @@ def demo():
     complete_pointcloud.colors = o3d.utility.Vector3dVector(colors)
     complete_mesh.vertex_colors = o3d.utility.Vector3dVector(colors)
 
-    #  partial_mesh.compute_vertex_normals()
+    complete_pointcloud.normals = o3d.utility.Vector3dVector()
+
+    partial_mesh.compute_vertex_normals()
     #  complete_mesh.compute_vertex_normals()
+
+    sphere_complete_pointcloud = o3d.geometry.PointCloud()
+    sphere_complete_points_list = []
+    sphere_complete_colors_list = []
+    mesh_sphere = o3d.geometry.TriangleMesh.create_sphere(
+        radius=0.001,
+        resolution=10)
+    sphere_points = np.array(mesh_sphere.vertices)
+
+    complete_points = np.array(complete_pointcloud.points)
+    complete_colors = np.array(complete_pointcloud.colors)
+    for i in range(len(complete_points)):
+        new_points = sphere_points + complete_points[i]
+        sphere_complete_points_list.append(new_points)
+        for _ in sphere_points:
+            sphere_complete_colors_list.append(complete_colors[i])
+    points = np.concatenate(sphere_complete_points_list, axis=0)
+    colors = np.array(sphere_complete_colors_list)
+    sphere_complete_pointcloud.points = \
+        o3d.utility.Vector3dVector(points)
+    sphere_complete_pointcloud.colors = \
+        o3d.utility.Vector3dVector(colors)
 
     o3d.visualization.draw_geometries([
         partial_mesh,
-        #  complete_mesh
+        sphere_complete_pointcloud
     ])
-    #  o3d.io.write_point_cloud(output_file_path, complete_pointcloud)
+
+    #  partial_ply_path = "/home/chli/chLi/coscan_data/sofa_partial.ply"
+    #  complete_pcd_path = "/home/chli/chLi/coscan_data/sofa_complete.ply"
+    #  o3d.io.write_triangle_mesh(partial_ply_path, partial_mesh)
+    #  o3d.io.write_point_cloud(complete_pcd_path, complete_pointcloud)
+
     return True
 
 if __name__ == "__main__":
