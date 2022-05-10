@@ -36,6 +36,30 @@ red_blue_color_map = np.array([
 
 COLOR_MAP = red_white_color_map
 
+def getSpherePointCloud(pointcloud,radius=1.0, resolution=20):
+    sphere_pointcloud = o3d.geometry.PointCloud()
+    sphere_points_list = []
+    sphere_colors = []
+    mesh_sphere = o3d.geometry.TriangleMesh.create_sphere(
+        radius=radius,
+        resolution=resolution)
+    sphere_points = np.array(mesh_sphere.vertices)
+
+    points = np.array(pointcloud.points)
+    colors = np.array(pointcloud.colors)
+    for i in range(len(points)):
+        new_points = sphere_points + points[i]
+        sphere_points_list.append(new_points)
+        for _ in sphere_points:
+            sphere_colors.append(colors[i])
+    points = np.concatenate(sphere_points_list, axis=0)
+    colors = np.array(sphere_colors)
+    sphere_pointcloud.points = \
+        o3d.utility.Vector3dVector(points)
+    sphere_pointcloud.colors = \
+        o3d.utility.Vector3dVector(colors)
+    return sphere_pointcloud
+
 def demo():
     model_path = os.environ['HOME'] + "/.ros/GRNet-ShapeNet.pth"
     pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7.ply"
@@ -115,27 +139,8 @@ def demo():
     #  visualizer.run()
     #  visualizer.destroy_window()
 
-    sphere_complete_pointcloud = o3d.geometry.PointCloud()
-    sphere_complete_points_list = []
-    sphere_complete_colors_list = []
-    mesh_sphere = o3d.geometry.TriangleMesh.create_sphere(
-        radius=0.001,
-        resolution=20)
-    sphere_points = np.array(mesh_sphere.vertices)
-
-    complete_points = np.array(complete_pointcloud.points)
-    complete_colors = np.array(complete_pointcloud.colors)
-    for i in range(len(complete_points)):
-        new_points = sphere_points + complete_points[i]
-        sphere_complete_points_list.append(new_points)
-        for _ in sphere_points:
-            sphere_complete_colors_list.append(complete_colors[i])
-    points = np.concatenate(sphere_complete_points_list, axis=0)
-    colors = np.array(sphere_complete_colors_list)
-    sphere_complete_pointcloud.points = \
-        o3d.utility.Vector3dVector(points)
-    sphere_complete_pointcloud.colors = \
-        o3d.utility.Vector3dVector(colors)
+    sphere_complete_pointcloud = getSpherePointCloud(complete_pointcloud,
+                                                     0.001, 20)
 
     o3d.visualization.draw_geometries([
         partial_mesh,
