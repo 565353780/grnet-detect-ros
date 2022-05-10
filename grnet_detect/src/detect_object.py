@@ -60,6 +60,24 @@ def getSpherePointCloud(pointcloud,radius=1.0, resolution=20):
         o3d.utility.Vector3dVector(colors)
     return sphere_pointcloud
 
+def Open3DVisualizer(geometry_list):
+    visualizer = o3d.visualization.Visualizer()
+    visualizer.create_window(window_name="test")
+
+    view_control = visualizer.get_view_control()
+
+    render_option = visualizer.get_render_option()
+    render_option.line_width = 1.0
+    render_option.point_size = 10.0
+    render_option.background_color = np.array([255.0, 255.0, 255.0])/255.0
+
+    for geometry_object in geometry_list:
+        visualizer.add_geometry(geometry_object)
+
+    visualizer.run()
+    visualizer.destroy_window()
+    return True
+
 def demo():
     model_path = os.environ['HOME'] + "/.ros/GRNet-ShapeNet.pth"
     pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7.ply"
@@ -126,18 +144,6 @@ def demo():
 
     partial_mesh.compute_vertex_normals()
     #  complete_mesh.compute_vertex_normals()
-
-    #  visualizer = o3d.visualization.Visualizer()
-    #  visualizer.create_window(window_name="test")
-    #  view_control = visualizer.get_view_control()
-    #  render_option = visualizer.get_render_option()
-    #  render_option.line_width = 1.0
-    #  render_option.point_size = 10.0
-    #  render_option.background_color = np.array([255.0, 255.0, 255.0])/255.0
-    #  visualizer.add_geometry(partial_mesh)
-    #  visualizer.add_geometry(complete_pointcloud)
-    #  visualizer.run()
-    #  visualizer.destroy_window()
 
     sphere_complete_pointcloud = getSpherePointCloud(complete_pointcloud,
                                                      0.001, 20)
