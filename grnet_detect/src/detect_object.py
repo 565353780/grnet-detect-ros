@@ -103,12 +103,24 @@ def demo():
     partial_mesh.compute_vertex_normals()
     #  complete_mesh.compute_vertex_normals()
 
+    #  visualizer = o3d.visualization.Visualizer()
+    #  visualizer.create_window(window_name="test")
+    #  view_control = visualizer.get_view_control()
+    #  render_option = visualizer.get_render_option()
+    #  render_option.line_width = 1.0
+    #  render_option.point_size = 10.0
+    #  render_option.background_color = np.array([255.0, 255.0, 255.0])/255.0
+    #  visualizer.add_geometry(partial_mesh)
+    #  visualizer.add_geometry(complete_pointcloud)
+    #  visualizer.run()
+    #  visualizer.destroy_window()
+
     sphere_complete_pointcloud = o3d.geometry.PointCloud()
     sphere_complete_points_list = []
     sphere_complete_colors_list = []
     mesh_sphere = o3d.geometry.TriangleMesh.create_sphere(
         radius=0.001,
-        resolution=10)
+        resolution=20)
     sphere_points = np.array(mesh_sphere.vertices)
 
     complete_points = np.array(complete_pointcloud.points)
