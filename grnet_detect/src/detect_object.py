@@ -8,17 +8,13 @@ import open3d as o3d
 from GRNetDetector.GRNet_Detector import GRNet_Detector
 
 red_white_color_map = np.array([
-    [180, 180, 180],
+    [255, 255, 255], [255, 255, 255],
+    [255, 255, 255], [255, 255, 255],
+    [255, 255, 255], [255, 255, 255],
     [228, 177, 171],
     [227, 150, 149],
     [223, 115, 115],
     [218, 85, 82],
-    [204, 68, 75],
-    [204, 68, 75],
-    [204, 68, 75],
-    [204, 68, 75],
-    [204, 68, 75],
-    [204, 68, 75],
     [204, 68, 75],
 ], dtype=np.float)
 
@@ -80,9 +76,9 @@ def Open3DVisualizer(geometry_list):
 
 def getHeatMap():
     partial_mesh_file_path = \
-        "/home/chli/chLi/2022_5_9_18-35-42/scan12.ply"
+        "/home/chli/chLi/coscan_data/table-incomplete.ply"
     complete_mesh_file_path = \
-        "/home/chli/chLi/2022_5_9_18-35-42/target_gt_mesh_2x.ply"
+        "/home/chli/chLi/coscan_data/table-complete.ply"
 
     complete_mesh = o3d.io.read_triangle_mesh(complete_mesh_file_path)
     complete_pointcloud = o3d.io.read_point_cloud(complete_mesh_file_path)
@@ -115,17 +111,18 @@ def getHeatMap():
     color_num = len(COLOR_MAP)
     min_dist = 0
     max_dist = np.max(dist_to_partial)
-    dist_step = (max_dist - min_dist) / color_num
+    dist_step = (max_dist - min_dist) / (color_num - 1.0)
 
     for dist in dist_to_partial:
         dist_divide = dist / dist_step
         color_idx = int(dist_divide)
-        if color_idx >= color_num:
-            color_idx -= 1
-        next_color_weight = dist_divide - color_idx
+        if color_idx >= color_num - 1:
+            colors.append(COLOR_MAP[-1])
+            continue
 
+        next_color_weight = dist_divide - color_idx
         color = (1.0 - next_color_weight) * COLOR_MAP[color_idx]
-        if color_idx < color_num - 1:
+        if next_color_weight > 0:
             color += next_color_weight * COLOR_MAP[color_idx + 1]
         colors.append(color)
 
@@ -140,15 +137,15 @@ def getHeatMap():
 
     #  sphere_complete_pointcloud = getSpherePointCloud(complete_pointcloud, 0.001, 20)
 
-    o3d.visualization.draw_geometries([
-        partial_mesh,
-        complete_mesh
-    ])
+    #  o3d.visualization.draw_geometries([
+        #  partial_mesh,
+        #  complete_pointcloud
+    #  ])
 
-    #  partial_mesh_path = "/home/chli/chLi/coscan_data/sofa_partial.ply"
-    #  complete_mesh_path = "/home/chli/chLi/coscan_data/sofa_complete_mesh.ply"
-    #  o3d.io.write_triangle_mesh(partial_mesh_path, partial_mesh, write_ascii=True)
-    #  o3d.io.write_triangle_mesh(complete_mesh_path, complete_mesh, write_ascii=True)
+    partial_mesh_path = "/home/chli/chLi/coscan_data/table_partial_mesh.ply"
+    complete_mesh_path = "/home/chli/chLi/coscan_data/table_complete_mesh.ply"
+    o3d.io.write_triangle_mesh(partial_mesh_path, partial_mesh, write_ascii=True)
+    o3d.io.write_triangle_mesh(complete_mesh_path, complete_mesh, write_ascii=True)
 
     return True
 
