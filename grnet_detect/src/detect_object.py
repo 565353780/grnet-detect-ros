@@ -78,24 +78,17 @@ def Open3DVisualizer(geometry_list):
     visualizer.destroy_window()
     return True
 
-def demo():
-    model_path = os.environ['HOME'] + "/.ros/GRNet-ShapeNet.pth"
-    pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7.ply"
-    o3d_pcd_file_path = "/home/chli/chLi/coscan_data/sofa-incomp.ply"
-    gt_pcd_file_path = "/home/chli/chLi/coscan_data/sofa-complete.ply"
-    output_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan7_grnet.ply"
+def getHeatMap():
+    partial_mesh_file_path = \
+        "/home/chli/chLi/2022_5_9_18-35-42/scan12.ply"
+    complete_mesh_file_path = \
+        "/home/chli/chLi/2022_5_9_18-35-42/target_gt_mesh_2x.ply"
 
-    grnet_detector = GRNet_Detector()
-    grnet_detector.load_model(model_path)
-    pointcloud_result = grnet_detector.detect_pcd_file(pcd_file_path)
+    complete_mesh = o3d.io.read_triangle_mesh(complete_mesh_file_path)
+    complete_pointcloud = o3d.io.read_point_cloud(complete_mesh_file_path)
 
-    #  complete_pointcloud = o3d.geometry.PointCloud()
-    #  complete_pointcloud.points = o3d.utility.Vector3dVector(pointcloud_result)
-    complete_mesh = o3d.io.read_triangle_mesh(gt_pcd_file_path)
-    complete_pointcloud = o3d.io.read_point_cloud(gt_pcd_file_path)
-
-    partial_mesh = o3d.io.read_triangle_mesh(o3d_pcd_file_path)
-    partial_pointcloud = o3d.io.read_point_cloud(o3d_pcd_file_path)
+    partial_mesh = o3d.io.read_triangle_mesh(partial_mesh_file_path)
+    partial_pointcloud = o3d.io.read_point_cloud(partial_mesh_file_path)
     sigma = 0
     if sigma > 0:
         partial_points = np.array(partial_pointcloud.points)
@@ -143,23 +136,35 @@ def demo():
     complete_pointcloud.normals = o3d.utility.Vector3dVector()
 
     partial_mesh.compute_vertex_normals()
-    #  complete_mesh.compute_vertex_normals()
+    complete_mesh.compute_vertex_normals()
 
-    sphere_complete_pointcloud = getSpherePointCloud(complete_pointcloud,
-                                                     0.001, 20)
+    #  sphere_complete_pointcloud = getSpherePointCloud(complete_pointcloud, 0.001, 20)
 
     o3d.visualization.draw_geometries([
         partial_mesh,
-        sphere_complete_pointcloud
+        complete_mesh
     ])
 
-    #  partial_ply_path = "/home/chli/chLi/coscan_data/sofa_partial.ply"
-    #  complete_pcd_path = "/home/chli/chLi/coscan_data/sofa_complete.ply"
-    #  o3d.io.write_triangle_mesh(partial_ply_path, partial_mesh)
-    #  o3d.io.write_point_cloud(complete_pcd_path, complete_pointcloud)
+    #  partial_mesh_path = "/home/chli/chLi/coscan_data/sofa_partial.ply"
+    #  complete_mesh_path = "/home/chli/chLi/coscan_data/sofa_complete_mesh.ply"
+    #  o3d.io.write_triangle_mesh(partial_mesh_path, partial_mesh, write_ascii=True)
+    #  o3d.io.write_triangle_mesh(complete_mesh_path, complete_mesh, write_ascii=True)
 
     return True
 
+def demo():
+    model_path = os.environ['HOME'] + "/.ros/GRNet-ShapeNet.pth"
+    pcd_file_path = "/home/chli/chLi/2022_5_9_18-35-42/scan12.ply"
+
+    grnet_detector = GRNet_Detector()
+    grnet_detector.load_model(model_path)
+    pointcloud_result = grnet_detector.detect_pcd_file(pcd_file_path)
+
+    complete_pointcloud = o3d.geometry.PointCloud()
+    complete_pointcloud.points = o3d.utility.Vector3dVector(pointcloud_result)
+    return True
+
 if __name__ == "__main__":
-    demo()
+    #  demo()
+    getHeatMap()
 
