@@ -8,14 +8,13 @@ import open3d as o3d
 from GRNetDetector.GRNet_Detector import GRNet_Detector
 
 red_white_color_map = np.array([
-    [255, 255, 255], [255, 255, 255],
-    [255, 255, 255], [255, 255, 255],
-    [255, 255, 255], [255, 255, 255],
-    [228, 177, 171],
-    [227, 150, 149],
-    [223, 115, 115],
+    [255, 255, 255],
+    [228, 177, 171], [228, 177, 171],
+    [227, 150, 149], [227, 150, 149],
+    [223, 115, 115], [223, 115, 115],
     [218, 85, 82],
-    [204, 68, 75],
+    [204, 68, 75], [204, 68, 75],
+    [204, 68, 75], [204, 68, 75],
 ], dtype=np.float)
 
 red_blue_color_map = np.array([
@@ -76,9 +75,9 @@ def Open3DVisualizer(geometry_list):
 
 def getHeatMap():
     partial_mesh_file_path = \
-        "/home/chli/chLi/coscan_data/table-incomplete.ply"
+        "/home/chli/chLi/coscan_data/incomplete_chair_1.ply"
     complete_mesh_file_path = \
-        "/home/chli/chLi/coscan_data/table-complete.ply"
+        "/home/chli/chLi/coscan_data/chari-complete_4.ply"
 
     complete_mesh = o3d.io.read_triangle_mesh(complete_mesh_file_path)
     complete_pointcloud = o3d.io.read_point_cloud(complete_mesh_file_path)
@@ -117,7 +116,7 @@ def getHeatMap():
         dist_divide = dist / dist_step
         color_idx = int(dist_divide)
         if color_idx >= color_num - 1:
-            colors.append(COLOR_MAP[-1])
+            colors.append(COLOR_MAP[color_num - 1])
             continue
 
         next_color_weight = dist_divide - color_idx
@@ -137,13 +136,13 @@ def getHeatMap():
 
     #  sphere_complete_pointcloud = getSpherePointCloud(complete_pointcloud, 0.001, 20)
 
-    #  o3d.visualization.draw_geometries([
-        #  partial_mesh,
-        #  complete_pointcloud
-    #  ])
+    o3d.visualization.draw_geometries([
+        partial_mesh,
+        complete_pointcloud
+    ])
 
-    partial_mesh_path = "/home/chli/chLi/coscan_data/table_partial_mesh.ply"
-    complete_mesh_path = "/home/chli/chLi/coscan_data/table_complete_mesh.ply"
+    partial_mesh_path = "/home/chli/chLi/coscan_data/chair_partial_mesh.ply"
+    complete_mesh_path = "/home/chli/chLi/coscan_data/chair_complete_mesh.ply"
     o3d.io.write_triangle_mesh(partial_mesh_path, partial_mesh, write_ascii=True)
     o3d.io.write_triangle_mesh(complete_mesh_path, complete_mesh, write_ascii=True)
 
