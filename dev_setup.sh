@@ -9,7 +9,7 @@ pip3 install -U torch torchvision torchaudio \
 
 python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
-cd grnet-detect-ros/grnet_detect/src/GRNetDetector/extensions/chamfer_dist
+cd grnet_detect/src/GRNetDetector/extensions/chamfer_dist
 python setup.py install --user
 
 cd ../cubic_feature_sampling
